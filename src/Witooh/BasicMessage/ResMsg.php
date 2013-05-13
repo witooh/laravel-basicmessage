@@ -43,22 +43,22 @@ class ResMsg
 
     /**
      * @param string $errorMessage
-     * @param \Illuminate\Support\Collection $data
+     * @param \Illuminate\Support\Collection|array|null $data
      * @return $this
      */
-    public function error($errorMessage, Collection $data = null)
+    public function error($errorMessage, $data = null)
     {
         $this->status = 'error';
         $this->code   = static::ERROR;
         $this->error  = new MessageBag();
         $this->error->add('error', $errorMessage);
-        $this->data = empty($data) ? $data : null;
+        $this->setData($data);
 
         return $this;
     }
 
     /**
-     * @param $data
+     * @param \Illuminate\Support\Collection|array|null $data
      * @return ResMsg $this
      */
     public function success($data = null)
@@ -66,7 +66,7 @@ class ResMsg
         $this->status = 'success';
         $this->code   = static::SUCCESS;
         $this->error  = null;
-        $this->data   = empty($data) ? $data : null;
+        $this->setData($data);
 
         return $this;
     }
@@ -187,6 +187,18 @@ class ResMsg
         }
 
         return $result;
+    }
+
+    protected function setData($data){
+        if(!empty($data)){
+            if($data instanceof Collection){
+                $this->data = $data;
+            }elseif(is_array($data)){
+                $this->data = $data;
+            }
+        }else{
+            $this->data = null;
+        }
     }
 
 
