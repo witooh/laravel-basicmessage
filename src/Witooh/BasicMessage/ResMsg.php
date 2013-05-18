@@ -194,7 +194,7 @@ class ResMsg
             if($data instanceof Collection){
                 $this->data = $data;
             }elseif(is_array($data)){
-                $this->data = $data;
+                $this->data = new Collection($data);
             }
         }else{
             $this->data = null;
