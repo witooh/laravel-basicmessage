@@ -18,9 +18,9 @@ class BasicMessageServiceProvider extends ServiceProvider {
 	 */
 	public function register()
 	{
-        $this->app['resmsg'] = $this->app->share(
+        $this->app['jsonresponse'] = $this->app->share(
             function () {
-                return new ResMsg();
+                return new JsonResponse(true);
             }
         );
 

@@ -3,8 +3,10 @@
 namespace Witooh\BasicMessage;
 use Illuminate\Support\MessageBag;
 use Illuminate\Support\Collection;
+use App;
+use Response;
 
-class ResMsg
+class JsonResponse
 {
     const SUCCESS    = 200;
     const ERROR      = 500;
@@ -21,15 +23,36 @@ class ResMsg
     /** @var int */
     protected $code;
 
-    /** @var MessageBag */
+    /** @var \Illuminate\Support\Collection */
     protected $error;
 
-    function __construct()
+    protected $errorHandler;
+
+    function __construct($errorHandler = false)
     {
         $this->status = null;
         $this->code   = null;
         $this->error  = null;
         $this->data   = null;
+        $this->errorHandler = $errorHandler;
+
+        App::error(function(\Symfony\Component\HttpKernel\Exception\HttpException $exception, $code)
+        {
+            $res = Response::make($exception->getMessage(), $code);
+            $res->headers->add(array(
+                    'Content-Type'=>'application/json'
+                ));
+
+            return $res;
+        });
+    }
+
+    protected function returnError(){
+        if($this->errorHandler){
+            App::abort($this->code, $this->toJson());
+        }else{
+            return $this;
+        }
     }
 
     /**
@@ -50,11 +73,11 @@ class ResMsg
     {
         $this->status = 'error';
         $this->code   = static::ERROR;
-        $this->error  = new MessageBag();
-        $this->error->add('error', $errorMessage);
+        $this->error  = new Collection();
+        $this->error->push($errorMessage);
         $this->setData($data);
 
-        return $this;
+        return $this->returnError();
     }
 
     /**
@@ -68,7 +91,7 @@ class ResMsg
         $this->error  = null;
         $this->setData($data);
 
-        return $this;
+        return $this->returnError();
     }
 
     /**
@@ -83,7 +106,7 @@ class ResMsg
         $this->error  = $errors;
         $this->data   = $data;
 
-        return $this;
+        return $this->returnError();
     }
 
     /**
@@ -94,11 +117,11 @@ class ResMsg
     {
         $this->status = 'error';
         $this->code   = static::AUTH;
-        $this->error  = new MessageBag();
-        $this->error->add('error', $errorMessage);
+        $this->error  = new Collection();
+        $this->error->push($errorMessage);
         $this->data = null;
 
-        return $this;
+        return $this->returnError();
     }
 
     /**
@@ -109,11 +132,11 @@ class ResMsg
     {
         $this->status = 'error';
         $this->code   = static::VALIDATION;
-        $this->error  = new MessageBag();
-        $this->error->add('error', $errorMessage);
+        $this->error  = new Collection();
+        $this->error->push($errorMessage);
         $this->data = null;
 
-        return $this;
+        return $this->returnError();
     }
 
     /**
@@ -187,6 +210,10 @@ class ResMsg
         }
 
         return $result;
+    }
+
+    public function toJson(){
+        return json_encode($this->toArray());
     }
 
     protected function setData($data){
