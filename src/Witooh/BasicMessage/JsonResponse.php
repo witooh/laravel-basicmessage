@@ -13,6 +13,7 @@ class JsonResponse
     const VALIDATION = 501;
     const PERMISSION = 400;
     const AUTH       = 401;
+    const NOTFOUND   = 404;
 
     /** @var \Illuminate\Support\Collection */
     protected $data;
@@ -82,7 +83,7 @@ class JsonResponse
 
     /**
      * @param \Illuminate\Support\Collection|array|null $data
-     * @return ResMsg $this
+     * @return JsonResponse $this
      */
     public function success($data = null)
     {
@@ -96,22 +97,22 @@ class JsonResponse
 
     /**
      * @param MessageBag $errors
-     * @param \Illuminate\Support\Collection $data
-     * @return ResMsg $this
+     * @param \Illuminate\Support\Collection|array|null $data
+     * @return JsonResponse $this
      */
-    public function validation($errors, Collection $data = null)
+    public function validation($errors, $data = null)
     {
         $this->status = 'error';
         $this->code   = static::VALIDATION;
         $this->error  = $errors;
-        $this->data   = $data;
+        $this->setData($data);
 
         return $this->returnError();
     }
 
     /**
      * @param string $errorMessage
-     * @return ResMsg $this
+     * @return JsonResponse $this
      */
     public function auth($errorMessage = 'Authenticate is required')
     {
@@ -126,13 +127,23 @@ class JsonResponse
 
     /**
      * @param string $errorMessage
-     * @return ResMsg $this
+     * @return JsonResponse $this
      */
     public function permission($errorMessage = 'Permission denied')
     {
         $this->status = 'error';
         $this->code   = static::VALIDATION;
         $this->error  = new Collection();
+        $this->error->push($errorMessage);
+        $this->data = null;
+
+        return $this->returnError();
+    }
+
+    public function notfound($errorMessage = 'The request not found'){
+        $this->status = 'error';
+        $this->code = static::NOTFOUND;
+        $this->error = new Collection;
         $this->error->push($errorMessage);
         $this->data = null;
 
